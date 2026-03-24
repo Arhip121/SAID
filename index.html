@@ -286,17 +286,19 @@
 <audio id="localRingtone" loop><source src="https://audio.jukehost.co.uk/fuZQV1lakc84kmMnIHRnfK6ZTcq9KEBk" type="audio/mpeg"></audio>
 
 <script>
-    // ========== Firebase Конфигурация (ВАША) ==========
+    // ========== Firebase Конфигурация ==========
+    // 🔴 ВАЖНО: вставьте сюда точный URL вашей Realtime Database из консоли Firebase 🔴
     const firebaseConfig = {
         apiKey: "AIzaSyCc7rd2MbIVmkpjh2rVc0dgn_PZuLz1-Ys",
         authDomain: "said-6d6ed.firebaseapp.com",
+        databaseURL: "https://said-6d6ed-default-rtdb.firebaseio.com",   // 👈 ПРОВЕРЬТЕ ЭТОТ URL!
         projectId: "said-6d6ed",
         storageBucket: "said-6d6ed.firebasestorage.app",
         messagingSenderId: "716757584874",
         appId: "1:716757584874:web:4f6681d8639d5067f28093",
         measurementId: "G-CPV7TXYDMT"
     };
-    // =================================================
+    // ===========================================
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -312,7 +314,7 @@
     }
     document.getElementById('roomCode').innerText = roomId;
     document.getElementById('copyRoomBtn').onclick = () => {
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(window.location.href).catch(() => alert('Скопируйте ссылку вручную'));
         alert('Ссылка скопирована!');
     };
 
@@ -364,7 +366,7 @@
     settingsModal.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
     anthemBtn.onclick = () => { anthemAudio.play().catch(e => alert('Разрешите воспроизведение в браузере')); };
 
-    // Аутентификация и инициализация Firebase
+    // ========== Аутентификация и инициализация ==========
     auth.signInAnonymously()
         .then(userCred => {
             currentUserId = userCred.user.uid;
@@ -403,7 +405,6 @@
                         callRef.remove();
                     }
                 } else if (data.type === 'answer' && peer && !isInCall && data.to !== currentUserId) {
-                    // Ответ на наш offer
                     console.log('Получен answer, сигналим peer');
                     peer.signal(data.answer);
                 }
@@ -415,7 +416,7 @@
         })
         .catch(err => {
             console.error('❌ Ошибка аутентификации Firebase:', err);
-            alert('Ошибка подключения к Firebase. Проверьте настройки и включите анонимную аутентификацию.');
+            alert('Ошибка подключения к Firebase. Проверьте: 1) Включена ли анонимная аутентификация? 2) Создана ли Realtime Database? 3) Правильный ли databaseURL?');
         });
 
     function addMessageToChat(text, sender, timestamp) {
@@ -473,7 +474,6 @@
                     offer: data,
                     timestamp: Date.now()
                 }).then(() => {
-                    // Таймаут на ответ
                     setTimeout(() => {
                         if (isCalling && !isInCall) {
                             callRef.remove();
