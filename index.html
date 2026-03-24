@@ -140,17 +140,16 @@
             background: #1e1f2c;
             padding: 12px 16px;
             border-top: 1px solid #3a3c55;
-            display: flex;
-            gap: 10px;
         }
         .message-input {
-            flex: 1;
+            width: 100%;
             background: #2b2d3e;
             border: none;
             padding: 12px 16px;
             border-radius: 30px;
             color: white;
             outline: none;
+            font-size: 0.95rem;
         }
         .send-btn {
             background: #2c6e9e;
@@ -161,6 +160,7 @@
             color: white;
             font-size: 1.3rem;
             cursor: pointer;
+            flex-shrink: 0;
         }
         .modal {
             position: fixed;
@@ -236,6 +236,14 @@
         body.rkn-mode .message-input, body.rkn-mode .send-btn, body.rkn-mode .call-btn { pointer-events: none; opacity: 0.5; }
         .rkn-warning { display: none; background: #a1220a; color: #ffc; padding: 8px; text-align: center; font-size: 0.75rem; }
         body.rkn-mode .rkn-warning { display: block; }
+        /* форма */
+        .message-form {
+            display: flex;
+            gap: 10px;
+            background: #1e1f2c;
+            padding: 12px 16px;
+            border-top: 1px solid #3a3c55;
+        }
     </style>
 </head>
 <body>
@@ -260,10 +268,11 @@
     </div>
     <div class="rkn-warning">⚠️ РКН: отправка сообщений и звонки заблокированы</div>
     <div class="chat-area" id="chatMessages"></div>
-    <div class="input-area">
-        <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение...">
-        <button class="send-btn" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
-    </div>
+
+    <form class="message-form" id="messageForm">
+        <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение..." autocomplete="off">
+        <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+    </form>
 </div>
 
 <div id="settingsModal" class="modal">
@@ -325,7 +334,7 @@
 
     const chatDiv = document.getElementById('chatMessages');
     const msgInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
+    const sendBtn = document.querySelector('#messageForm .send-btn');
     const callBtn = document.getElementById('callBtn');
     const callStatusDiv = document.getElementById('callStatus');
     const ringtone = document.getElementById('ringtone');
@@ -432,20 +441,14 @@
         });
     }
 
-    // ========== ПРОСТАЯ ОТПРАВКА ==========
-    function sendCurrent() {
+    // ========== ОТПРАВКА ЧЕРЕЗ ФОРМУ ==========
+    const messageForm = document.getElementById('messageForm');
+    messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         const text = msgInput.value;
         if (text.trim()) {
             sendMessage(text);
             msgInput.value = '';
-        }
-    }
-
-    sendBtn.onclick = sendCurrent;
-    msgInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            sendCurrent();
         }
     });
 
