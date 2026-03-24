@@ -303,7 +303,6 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // Получаем комнату из URL или создаём новую
     const urlParams = new URLSearchParams(window.location.search);
     let roomId = urlParams.get('room');
     if (!roomId) {
@@ -332,7 +331,6 @@
     const ringtone = document.getElementById('ringtone');
     const localRingtone = document.getElementById('localRingtone');
 
-    // Режимы (локальные)
     let geevkaActive = false, rknActive = false;
     const geevkaToggle = document.getElementById('geevkaToggle');
     const rknToggle = document.getElementById('rknToggle');
@@ -363,9 +361,9 @@
     settingsBtn.onclick = () => settingsModal.classList.add('active');
     closeModalBtn.onclick = () => settingsModal.classList.remove('active');
     settingsModal.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
-    anthemBtn.onclick = () => { anthemAudio.play().catch(e => alert('Разрешите воспроизведение в браузере')); };
+    anthemBtn.onclick = () => { anthemAudio.play().catch(e => alert('Разрешите воспроизведение')); };
 
-    // ========== Аутентификация и инициализация ==========
+    // ========== Аутентификация ==========
     auth.signInAnonymously()
         .then(userCred => {
             currentUserId = userCred.user.uid;
@@ -374,7 +372,6 @@
             messagesRef = roomRef.child('messages');
             callRef = roomRef.child('call');
 
-            // Слушаем новые сообщения
             messagesRef.on('child_added', snap => {
                 const msg = snap.val();
                 if (msg && msg.senderId !== currentUserId) {
@@ -384,32 +381,25 @@
                 }
             });
 
-            // Слушаем звонки (offer)
             callRef.on('child_added', snap => {
                 const data = snap.val();
                 if (!data) return;
-                console.log('Получены данные звонка:', data);
                 if (data.type === 'offer' && data.to === currentUserId && !isInCall && !isCalling) {
-                    if (rknActive) {
-                        callRef.remove();
-                        return;
-                    }
+                    if (rknActive) { callRef.remove(); return; }
                     const accept = confirm(`Входящий звонок от ${data.from}. Ответить?`);
                     if (accept) {
                         localRingtone.pause();
                         localRingtone.currentTime = 0;
-                        callRef.remove(); // удаляем offer
+                        callRef.remove();
                         startPeerAsAnswerer(data.offer);
                     } else {
                         callRef.remove();
                     }
                 } else if (data.type === 'answer' && peer && !isInCall && data.to !== currentUserId) {
-                    console.log('Получен answer, сигналим peer');
                     peer.signal(data.answer);
                 }
             });
 
-            // Отмечаем присутствие
             roomRef.child('users').child(currentUserId).set(true);
             roomRef.child('users').onDisconnect().remove();
         })
@@ -442,26 +432,22 @@
         });
     }
 
-    // ===== ИСПРАВЛЕННЫЕ ОБРАБОТЧИКИ ВВОДА =====
-    sendBtn.onclick = () => {
+    // ========== ПРОСТАЯ ОТПРАВКА ==========
+    function sendCurrent() {
         const text = msgInput.value;
         if (text.trim()) {
             sendMessage(text);
             msgInput.value = '';
         }
-    };
+    }
 
-    msgInput.addEventListener('keypress', (e) => {
+    sendBtn.onclick = sendCurrent;
+    msgInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const text = msgInput.value;
-            if (text.trim()) {
-                sendMessage(text);
-                msgInput.value = '';
-            }
+            sendCurrent();
         }
     });
-    // =========================================
 
     // ========== ЗВОНКИ ==========
     function startCall() {
@@ -483,7 +469,6 @@
 
             peer = new SimplePeer({ initiator: true, trickle: false });
             peer.on('signal', data => {
-                console.log('Отправляем offer в Firebase');
                 callRef.set({
                     type: 'offer',
                     from: currentUserId,
@@ -501,7 +486,6 @@
                 });
             });
             peer.on('connect', () => {
-                console.log('Звонок установлен!');
                 isInCall = true;
                 isCalling = false;
                 callBtn.classList.remove('ringing');
@@ -519,7 +503,6 @@
     function startPeerAsAnswerer(offerSignal) {
         peer = new SimplePeer({ initiator: false, trickle: false });
         peer.on('signal', data => {
-            console.log('Отправляем answer в Firebase');
             callRef.set({
                 type: 'answer',
                 from: currentUserId,
@@ -528,7 +511,6 @@
             });
         });
         peer.on('connect', () => {
-            console.log('Звонок установлен (ответившая сторона)');
             isInCall = true;
             callBtn.classList.remove('ringing');
             callBtn.classList.add('in-call');
@@ -543,10 +525,7 @@
     }
 
     function endCall() {
-        if (peer) {
-            peer.destroy();
-            peer = null;
-        }
+        if (peer) { peer.destroy(); peer = null; }
         isInCall = false;
         isCalling = false;
         callBtn.classList.remove('ringing', 'in-call');
@@ -564,7 +543,6 @@
         else startCall();
     };
 
-    // Очистка при закрытии
     window.addEventListener('beforeunload', () => {
         if (peer) peer.destroy();
         if (roomId && currentUserId) db.ref(`rooms/${roomId}/users/${currentUserId}`).remove();
