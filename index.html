@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CAIД — Мессенджер с чатом и звонками</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <!-- SimplePeer для WebRTC -->
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background 0.2s ease, color 0.2s;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0e1621;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+        }
+        .messenger {
+            width: 100%;
+            max-width: 900px;
+            height: 95vh;
+            background: #1e1f2c;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: #2b2d3e;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #3e405b;
+        }
+        .logo-placeholder {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #ffb347;
+        }
+        .logo-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .app-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #ffcc66, #ffaa44);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+        .icon-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 30px;
+            color: #e0e0e0;
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slogan {
+            background: #2b2d3e;
+            text-align: center;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: #ffcc88;
+            border-bottom: 1px solid #3e405b;
+            font-style: italic;
+        }
+        .room-info {
+            background: #171925;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3e405b;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        .room-code {
+            font-family: monospace;
+            background: #2b2d3e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .call-controls {
+            background: #1e1f2c;
+            padding: 8px 16px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            border-bottom: 1px solid #3e405b;
+        }
+        .call-btn {
+            background: #2c6e9e;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .call-btn.ringing {
+            background: #e67e22;
+            animation: pulse 1s infinite;
+        }
+        .call-btn.in-call {
+            background: #e74c3c;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #171925;
+        }
+        .message {
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+        .message.me {
+            align-self: flex-end;
+        }
+        .message.other {
+            align-self: flex-start;
+        }
+        .bubble {
+            padding: 10px 14px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            background: #2c2f3f;
+            color: #eef;
+        }
+        .me .bubble {
+            background: #2c6e9e;
+            color: white;
+        }
+        .time {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            color: #aaa;
+        }
+        .input-area {
+            background: #1e1f2c;
+            padding: 12px 16px;
+            border-top: 1px solid #3a3c55;
+            display: flex;
+            gap: 10px;
+        }
+        .message-input {
+            flex: 1;
+            background: #2b2d3e;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 30px;
+            color: white;
+            outline: none;
+        }
+        .send-btn {
+            background: #2c6e9e;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 44px;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: #252736;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 360px;
+            padding: 24px;
+            color: white;
+        }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            background: #2f3246;
+            padding: 12px 16px;
+            border-radius: 24px;
+        }
+        .toggle-switch {
+            width: 52px;
+            height: 26px;
+            background: #4f5270;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+        }
+        .toggle-switch.active {
+            background: #ff8c42;
+        }
+        .toggle-switch::after {
+            content: "";
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            transition: 0.2s;
+        }
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+        .close-modal {
+            background: #3c3f5e;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        body.geevka .messenger {
+            background: linear-gradient(145deg, #2b1b3a, #1a1a2e);
+            box-shadow: 0 0 18px rgba(255,0,212,0.5);
+        }
+        body.geevka .header {
+            background: linear-gradient(90deg, #ff66b5, #ffd966, #66ff66, #66ccff, #bf66ff);
+        }
+        body.geevka .me .bubble {
+            background: linear-gradient(135deg, #ff77aa, #ffaa77);
+        }
+        body.geevka .other .bubble {
+            background: linear-gradient(135deg, #aa88ff, #77aaff);
+        }
+        body.rkn-mode .messenger {
+            filter: grayscale(0.7) contrast(0.9);
+            border: 3px solid #8b0000;
+        }
+        body.rkn-mode .message-input, body.rkn-mode .send-btn, body.rkn-mode .call-btn {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        .rkn-warning {
+            display: none;
+            background: #a1220a;
+            color: #ffc;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        body.rkn-mode .rkn-warning {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="messenger">
+    <div class="header">
+        <div class="logo-placeholder">
+            <img src="https://i.ibb.co/Rk6Gbmy7/2026-03-24-22-19-36.jpg" alt="CAIД">
+        </div>
+        <div class="app-title">CAIД</div>
+        <div class="header-actions">
+            <button class="icon-btn" id="anthemBtn"><i class="fas fa-music"></i></button>
+            <button class="icon-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+        </div>
+    </div>
+    <div class="slogan">«Для Кондейки место всегда найдется для вас»</div>
+    <div class="room-info">
+        <span>Код комнаты:</span>
+        <span class="room-code" id="roomCode">загрузка...</span>
+        <button class="icon-btn" id="copyRoomBtn" style="width:auto; padding:4px 12px;"><i class="fas fa-copy"></i> Копировать</button>
+    </div>
+    <div class="call-controls">
+        <button class="call-btn" id="callBtn">📞 Позвонить</button>
+        <div id="callStatus" style="margin-left:12px; font-size:0.8rem; color:#aaa;"></div>
+    </div>
+    <div class="rkn-warning">⚠️ РКН: отправка сообщений и звонки заблокированы</div>
+    <div class="chat-area" id="chatMessages"></div>
+    <div class="input-area">
+        <input type="text" class="message-input" id="messageInput" placeholder="Введите сообщение...">
+        <button class="send-btn" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>Настройки</h3>
+        <div class="setting-item">
+            <span>🌈 Режим «Геевка»</span>
+            <div class="toggle-switch" id="geevkaToggle"></div>
+        </div>
+        <div class="setting-item">
+            <span>⚖️ Режим Роскомнадзор</span>
+            <div class="toggle-switch" id="rknToggle"></div>
+        </div>
+        <div style="text-align:center; margin-top:12px;">
+            <img src="https://i.ibb.co/xSy0mnGv/i-31.png" style="height:40px;">
+        </div>
+        <button class="close-modal" id="closeModalBtn">Закрыть</button>
+    </div>
+</div>
+
+<audio id="ringtone" loop>
+    <source src="https://audio.jukehost.co.uk/fuZQV1lakc84kmMnIHRnfK6ZTcq9KEBk" type="audio/mpeg">
+</audio>
+<audio id="localRingtone" loop>
+    <source src="https://audio.jukehost.co.uk/fuZQV1lakc84kmMnIHRnfK6ZTcq9KEBk" type="audio/mpeg">
+</audio>
+
+<script>
+    // ==================== FIREBASE КОНФИГ (ВАШИ ДАННЫЕ) ====================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCc7rd2MbIVmkpjh2rVc0dgn_PZuLz1-Ys",
+        authDomain: "said-6d6ed.firebaseapp.com",
+        projectId: "said-6d6ed",
+        storageBucket: "said-6d6ed.firebasestorage.app",
+        messagingSenderId: "716757584874",
+        appId: "1:716757584874:web:4f6681d8639d5067f28093",
+        measurementId: "G-CPV7TXYDMT"
+    };
+    // ==========================================================
+
+    // Инициализация Firebase (compat)
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Получение или создание комнаты
+    const urlParams = new URLSearchParams(window.location.search);
+    let roomId = urlParams.get('room');
+    if (!roomId) {
+        roomId = Math.random().toString(36).substring(2, 8);
+        const newUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+        window.history.replaceState({}, '', newUrl);
+    }
+    document.getElementById('roomCode').innerText = roomId;
+    document.getElementById('copyRoomBtn').onclick = () => {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Ссылка скопирована! Отправьте её другу.');
+    };
+
+    let currentUserId = null;
+    let messagesRef = null;
+    let callRef = null;
+    let peer = null;
+    let isInCall = false;
+    let isCalling = false;
+
+    const chatDiv = document.getElementById('chatMessages');
+    const msgInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const callBtn = document.getElementById('callBtn');
+    const callStatusDiv = document.getElementById('callStatus');
+    const ringtone = document.getElementById('ringtone');
+    const localRingtone = document.getElementById('localRingtone');
+
+    // Режимы
+    let geevkaActive = false;
+    let rknActive = false;
+    const geevkaToggle = document.getElementById('geevkaToggle');
+    const rknToggle = document.getElementById('rknToggle');
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const anthemBtn = document.getElementById('anthemBtn');
+    const anthemAudio = document.getElementById('localRingtone');
+
+    function applyGeevka(enable) {
+        geevkaActive = enable;
+        if(enable) document.body.classList.add('geevka');
+        else document.body.classList.remove('geevka');
+        if(geevkaToggle) geevkaToggle.classList.toggle('active', enable);
+        localStorage.setItem('geevka', enable);
+    }
+    function applyRkn(enable) {
+        rknActive = enable;
+        if(enable) document.body.classList.add('rkn-mode');
+        else document.body.classList.remove('rkn-mode');
+        if(rknToggle) rknToggle.classList.toggle('active', enable);
+        localStorage.setItem('rkn', enable);
+        const inputs = [msgInput, sendBtn, callBtn];
+        inputs.forEach(el => { if(el) el.disabled = enable; });
+    }
+    if(localStorage.getItem('geevka') === 'true') applyGeevka(true);
+    if(localStorage.getItem('rkn') === 'true') applyRkn(true);
+    geevkaToggle.onclick = () => applyGeevka(!geevkaActive);
+    rknToggle.onclick = () => applyRkn(!rknActive);
+    settingsBtn.onclick = () => settingsModal.classList.add('active');
+    closeModalBtn.onclick = () => settingsModal.classList.remove('active');
+    settingsModal.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
+    anthemBtn.onclick = () => { anthemAudio.play().catch(e => alert('Нажмите ещё раз, если музыка не играет')); };
+
+    // Аутентификация и инициализация
+    auth.signInAnonymously().then(userCred => {
+        currentUserId = userCred.user.uid;
+        const roomRef = db.ref(`rooms/${roomId}`);
+        messagesRef = roomRef.child('messages');
+        callRef = roomRef.child('call');
+
+        messagesRef.on('child_added', snap => {
+            const msg = snap.val();
+            if (!msg) return;
+            addMessageToChat(msg.text, msg.senderId === currentUserId ? 'me' : 'other', msg.timestamp);
+        });
+
+        callRef.on('value', snap => {
+            const callData = snap.val();
+            if (!callData) return;
+            if (callData.type === 'offer' && callData.to === currentUserId && !isInCall && !isCalling) {
+                if (rknActive) {
+                    callRef.remove();
+                    return;
+                }
+                const accept = confirm(`Входящий звонок от ${callData.from}. Ответить?`);
+                if (accept) {
+                    localRingtone.pause();
+                    localRingtone.currentTime = 0;
+                    callRef.remove();
+                    startPeerAsAnswerer(callData.offer);
+                } else {
+                    callRef.remove();
+                }
+            }
+        });
+
+        roomRef.child('users').child(currentUserId).set(true);
+        roomRef.child('users').onDisconnect().remove();
+    }).catch(console.error);
+
+    function sendMessage(text) {
+        if (!text.trim() || rknActive) return;
+        messagesRef.push({
+            text: text.trim(),
+            senderId: currentUserId,
+            timestamp: Date.now()
+        });
+    }
+
+    function addMessageToChat(text, sender, timestamp) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerText = text;
+        const timeSpan = document.createElement('div');
+        timeSpan.className = 'time';
+        timeSpan.innerText = new Date(timestamp).toLocaleTimeString();
+        msgDiv.appendChild(bubble);
+        msgDiv.appendChild(timeSpan);
+        chatDiv.appendChild(msgDiv);
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    sendBtn.onclick = () => { sendMessage(msgInput.value); msgInput.value = ''; };
+    msgInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(msgInput.value); msgInput.value = ''; };
+
+    // ========== ЗВОНКИ ==========
+    function startCall() {
+        if (rknActive) {
+            alert('Режим РКН: звонки недоступны');
+            return;
+        }
+        if (isInCall) {
+            alert('Вы уже в звонке');
+            return;
+        }
+        const roomUsersRef = db.ref(`rooms/${roomId}/users`);
+        roomUsersRef.once('value', snap => {
+            const users = snap.val();
+            const otherUserId = Object.keys(users || {}).find(id => id !== currentUserId);
+            if (!otherUserId) {
+                alert('В комнате пока нет другого пользователя. Подождите, пока друг зайдёт по ссылке.');
+                return;
+            }
+            isCalling = true;
+            callBtn.classList.add('ringing');
+            callStatusDiv.innerText = 'Вызов...';
+            localRingtone.loop = true;
+            localRingtone.play().catch(e => console.log);
+            peer = new SimplePeer({ initiator: true, trickle: false });
+            peer.on('signal', data => {
+                callRef.set({
+                    type: 'offer',
+                    from: currentUserId,
+                    to: otherUserId,
+                    offer: data,
+                    timestamp: Date.now()
+                }).then(() => {
+                    setTimeout(() => {
+                        if (isCalling && !isInCall) {
+                            callRef.remove();
+                            endCall();
+                            alert('Собеседник не ответил');
+                        }
+                    }, 30000);
+                });
+            });
+            peer.on('connect', () => {
+                isInCall = true;
+                isCalling = false;
+                callBtn.classList.remove('ringing');
+                callBtn.classList.add('in-call');
+                callBtn.innerText = '📞 Завершить звонок';
+                callStatusDiv.innerText = 'В звонке';
+                localRingtone.pause();
+                localRingtone.currentTime = 0;
+            });
+            peer.on('close', endCall);
+            peer.on('error', endCall);
+        });
+    }
+
+    function startPeerAsAnswerer(offerSignal) {
+        peer = new SimplePeer({ initiator: false, trickle: false });
+        peer.on('signal', data => {
+            callRef.set({
+                type: 'answer',
+                from: currentUserId,
+                answer: data,
+                timestamp: Date.now()
+            });
+        });
+        peer.on('connect', () => {
+            isInCall = true;
+            callBtn.classList.remove('ringing');
+            callBtn.classList.add('in-call');
+            callBtn.innerText = '📞 Завершить звонок';
+            callStatusDiv.innerText = 'В звонке';
+            ringtone.pause();
+            ringtone.currentTime = 0;
+        });
+        peer.on('close', endCall);
+        peer.signal(offerSignal);
+        const answerRef = callRef.orderByChild('type').equalTo('answer');
+        answerRef.once('child_added', snap => {
+            const answer = snap.val();
+            if (answer && answer.from !== currentUserId) {
+                peer.signal(answer.answer);
+                answerRef.off();
+            }
+        });
+    }
+
+    function endCall() {
+        if (peer) {
+            peer.destroy();
+            peer = null;
+        }
+        isInCall = false;
+        isCalling = false;
+        callBtn.classList.remove('ringing', 'in-call');
+        callBtn.innerText = '📞 Позвонить';
+        callStatusDiv.innerText = '';
+        localRingtone.pause();
+        localRingtone.currentTime = 0;
+        ringtone.pause();
+        ringtone.currentTime = 0;
+        callRef.remove();
+    }
+
+    callBtn.onclick = () => {
+        if (isInCall) endCall();
+        else startCall();
+    };
+
+    function listenForAnswer() {
+        callRef.on('child_added', snap => {
+            const data = snap.val();
+            if (!data) return;
+            if (data.type === 'answer' && peer && !isInCall && data.to !== currentUserId) {
+                peer.signal(data.answer);
+            }
+        });
+    }
+    listenForAnswer();
+
+    window.addEventListener('beforeunload', () => {
+        if (peer) peer.destroy();
+        if (roomId && currentUserId) db.ref(`rooms/${roomId}/users/${currentUserId}`).remove();
+    });
+</script>
+</body>
+</html>
