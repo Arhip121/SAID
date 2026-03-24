@@ -287,11 +287,10 @@
 
 <script>
     // ========== Firebase Конфигурация ==========
-    // 🔴 ВАЖНО: вставьте сюда точный URL вашей Realtime Database из консоли Firebase 🔴
     const firebaseConfig = {
         apiKey: "AIzaSyCc7rd2MbIVmkpjh2rVc0dgn_PZuLz1-Ys",
         authDomain: "said-6d6ed.firebaseapp.com",
-        databaseURL: "https://said-6d6ed-default-rtdb.firebaseio.com",   // 👈 ПРОВЕРЬТЕ ЭТОТ URL!
+        databaseURL: "https://said-6d6ed-default-rtdb.firebaseio.com",
         projectId: "said-6d6ed",
         storageBucket: "said-6d6ed.firebasestorage.app",
         messagingSenderId: "716757584874",
@@ -443,8 +442,26 @@
         });
     }
 
-    sendBtn.onclick = () => { sendMessage(msgInput.value); msgInput.value = ''; };
-    msgInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(msgInput.value); msgInput.value = ''; };
+    // ===== ИСПРАВЛЕННЫЕ ОБРАБОТЧИКИ ВВОДА =====
+    sendBtn.onclick = () => {
+        const text = msgInput.value;
+        if (text.trim()) {
+            sendMessage(text);
+            msgInput.value = '';
+        }
+    };
+
+    msgInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const text = msgInput.value;
+            if (text.trim()) {
+                sendMessage(text);
+                msgInput.value = '';
+            }
+        }
+    });
+    // =========================================
 
     // ========== ЗВОНКИ ==========
     function startCall() {
