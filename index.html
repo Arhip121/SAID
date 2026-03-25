@@ -10,11 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
             background: #0e1621;
@@ -50,11 +46,7 @@
             background: #ffb347;
             flex-shrink: 0;
         }
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
         .user-details {
             flex: 1;
             min-width: 0;
@@ -100,12 +92,8 @@
             align-items: center;
             gap: 4px;
         }
-        .nav-btn.active {
-            color: #ffaa66;
-        }
-        .nav-btn i {
-            font-size: 1.4rem;
-        }
+        .nav-btn.active { color: #ffaa66; }
+        .nav-btn i { font-size: 1.4rem; }
         .page {
             flex: 1;
             overflow-y: auto;
@@ -113,9 +101,7 @@
             flex-direction: column;
             padding: 12px;
         }
-        .page.active {
-            display: flex;
-        }
+        .page.active { display: flex; }
         .feed {
             display: flex;
             flex-direction: column;
@@ -223,9 +209,6 @@
             cursor: pointer;
             font-size: 0.9rem;
         }
-        .post-actions button.liked {
-            color: #ff5e7c;
-        }
         .chats-list {
             display: flex;
             flex-direction: column;
@@ -240,9 +223,6 @@
             gap: 12px;
             cursor: pointer;
             color: white;
-        }
-        .group-item.active {
-            background: #2c6e9e;
         }
         .add-group-btn {
             background: #2b2d3e;
@@ -293,12 +273,8 @@
             display: flex;
             flex-direction: column;
         }
-        .message.me {
-            align-self: flex-end;
-        }
-        .message.other {
-            align-self: flex-start;
-        }
+        .message.me { align-self: flex-end; }
+        .message.other { align-self: flex-start; }
         .message-header {
             font-size: 0.7rem;
             color: #aaa;
@@ -311,9 +287,7 @@
             color: white;
             word-break: break-word;
         }
-        .me .bubble {
-            background: #2c6e9e;
-        }
+        .me .bubble { background: #2c6e9e; }
         .chat-input-area {
             background: #1e1f2c;
             padding: 8px 12px;
@@ -358,10 +332,7 @@
             opacity: 0;
             transition: 0.2s;
         }
-        .modal.active {
-            visibility: visible;
-            opacity: 1;
-        }
+        .modal.active { visibility: visible; opacity: 1; }
         .modal-content {
             background: #252736;
             border-radius: 32px;
@@ -386,9 +357,7 @@
             position: relative;
             cursor: pointer;
         }
-        .toggle-switch.active {
-            background: #ff8c42;
-        }
+        .toggle-switch.active { background: #ff8c42; }
         .toggle-switch::after {
             content: "";
             width: 22px;
@@ -400,9 +369,7 @@
             left: 3px;
             transition: 0.2s;
         }
-        .toggle-switch.active::after {
-            left: 27px;
-        }
+        .toggle-switch.active::after { left: 27px; }
         .comments-list {
             max-height: 300px;
             overflow-y: auto;
@@ -416,9 +383,7 @@
             font-weight: bold;
             font-size: 0.8rem;
         }
-        .comment-text {
-            font-size: 0.9rem;
-        }
+        .comment-text { font-size: 0.9rem; }
         .users-list {
             max-height: 200px;
             overflow-y: auto;
@@ -432,26 +397,12 @@
             cursor: pointer;
             color: white;
         }
-        body.geevka .app {
-            background: linear-gradient(145deg, #2b1b3a, #1a1a2e);
-        }
-        body.geevka .top-bar, body.geevka .chat-header {
-            background: linear-gradient(90deg, #ff66b5, #ffd966, #66ff66, #66ccff, #bf66ff);
-        }
-        body.geevka .me .bubble {
-            background: linear-gradient(135deg, #ff77aa, #ffaa77);
-        }
-        body.geevka .other .bubble {
-            background: linear-gradient(135deg, #aa88ff, #77aaff);
-        }
-        body.rkn-mode .app {
-            filter: grayscale(0.7) contrast(0.9);
-            border: 3px solid #8b0000;
-        }
-        body.rkn-mode .chat-input, body.rkn-mode .send-btn {
-            pointer-events: none;
-            opacity: 0.5;
-        }
+        body.geevka .app { background: linear-gradient(145deg, #2b1b3a, #1a1a2e); }
+        body.geevka .top-bar, body.geevka .chat-header { background: linear-gradient(90deg, #ff66b5, #ffd966, #66ff66, #66ccff, #bf66ff); }
+        body.geevka .me .bubble { background: linear-gradient(135deg, #ff77aa, #ffaa77); }
+        body.geevka .other .bubble { background: linear-gradient(135deg, #aa88ff, #77aaff); }
+        body.rkn-mode .app { filter: grayscale(0.7) contrast(0.9); border: 3px solid #8b0000; }
+        body.rkn-mode .chat-input, body.rkn-mode .send-btn { pointer-events: none; opacity: 0.5; }
         .rkn-warning {
             display: none;
             background: #a1220a;
@@ -460,19 +411,11 @@
             text-align: center;
             font-size: 0.75rem;
         }
-        body.rkn-mode .rkn-warning {
-            display: block;
-        }
+        body.rkn-mode .rkn-warning { display: block; }
         @media (max-width: 600px) {
-            .nav-btn span {
-                display: none;
-            }
-            .nav-btn i {
-                font-size: 1.6rem;
-            }
-            .nav-btn {
-                padding: 4px 8px;
-            }
+            .nav-btn span { display: none; }
+            .nav-btn i { font-size: 1.6rem; }
+            .nav-btn { padding: 4px 8px; }
         }
     </style>
 </head>
@@ -494,7 +437,6 @@
         <button class="nav-btn" data-page="chats"><i class="fas fa-comments"></i><span>Чаты</span></button>
     </div>
 
-    <!-- Страница ленты -->
     <div class="page active" id="feedPage">
         <div class="feed">
             <div class="create-post">
@@ -509,13 +451,11 @@
         </div>
     </div>
 
-    <!-- Страница чатов -->
     <div class="page" id="chatsPage">
         <div class="chats-list" id="groupsList"></div>
         <button class="add-group-btn" id="addGroupBtn"><i class="fas fa-plus"></i> Создать группу</button>
     </div>
 
-    <!-- Окно чата -->
     <div id="chatWindow" class="chat-window" style="display: none;">
         <div class="chat-header">
             <button class="back-btn" id="closeChatBtn"><i class="fas fa-arrow-left"></i></button>
@@ -533,7 +473,6 @@
     </div>
 </div>
 
-<!-- Модалки -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <h3>Настройки</h3>
@@ -592,7 +531,6 @@
 <audio id="localRingtone" loop><source src="https://audio.jukehost.co.uk/fuZQV1lakc84kmMnIHRnfK6ZTcq9KEBk" type="audio/mpeg"></audio>
 
 <script>
-    // Firebase config
     const firebaseConfig = {
         apiKey: "AIzaSyCc7rd2MbIVmkpjh2rVc0dgn_PZuLz1-Ys",
         authDomain: "said-6d6ed.firebaseapp.com",
@@ -607,7 +545,7 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // DOM элементы
+    // DOM
     const userNameSpan = document.getElementById('userName');
     const editProfileBtn = document.getElementById('editProfileBtn');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -654,7 +592,6 @@
     let currentPostForComments = null;
     let selectedFile = null;
 
-    // Режимы
     let geevkaActive = false, rknActive = false;
     function applyGeevka(enable) {
         geevkaActive = enable;
@@ -676,15 +613,13 @@
     geevkaToggle.onclick = () => applyGeevka(!geevkaActive);
     rknToggle.onclick = () => applyRkn(!rknActive);
 
-    // Сохранение API ключа ImgBB
-    let imgbbApiKey = localStorage.getItem('imgbbApiKey') || '53d3ddff703aa1bf95808cde407ece0f';
+    let imgbbApiKey = localStorage.getItem('imgbbApiKey') || '';
     imgbbApiKeyInput.value = imgbbApiKey;
     imgbbApiKeyInput.onchange = () => {
         imgbbApiKey = imgbbApiKeyInput.value.trim();
         localStorage.setItem('imgbbApiKey', imgbbApiKey);
     };
 
-    // Переключение страниц
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
     navBtns.forEach(btn => {
@@ -699,7 +634,6 @@
         };
     });
 
-    // Анонимная аутентификация
     function initAnonymousAuth() {
         auth.signInAnonymously()
             .then(userCred => {
@@ -731,7 +665,6 @@
             });
     }
 
-    // Загрузка ленты
     function loadPosts() {
         db.ref('posts').orderByChild('timestamp').once('value', snap => {
             const posts = snap.val();
@@ -807,7 +740,6 @@
         loadComments(currentPostForComments);
     };
 
-    // Загрузка фото на ImgBB
     async function uploadToImgBB(file, apiKey) {
         const formData = new FormData();
         formData.append('image', file);
@@ -828,45 +760,51 @@
             alert('Для загрузки фото вставьте API ключ ImgBB в настройках');
             return;
         }
-        let mediaUrl = null;
-        if(selectedFile) {
-            try {
+        // Показываем индикатор загрузки
+        const originalText = publishPostBtn.innerText;
+        publishPostBtn.innerText = 'Публикация...';
+        publishPostBtn.disabled = true;
+        try {
+            let mediaUrl = null;
+            if(selectedFile) {
                 mediaUrl = await uploadToImgBB(selectedFile, imgbbApiKey);
-            } catch(e) {
-                alert('Ошибка загрузки фото: ' + e.message);
-                return;
             }
+            const post = {
+                authorId: currentUser.uid,
+                authorName: userNameSpan.innerText,
+                text: text,
+                mediaUrl: mediaUrl,
+                timestamp: Date.now(),
+                likes: 0,
+                commentsCount: 0
+            };
+            await db.ref('posts').push(post);
+            postText.value = '';
+            selectedFile = null;
+            selectedFileNameDiv.innerText = '';
+            loadPosts();
+        } catch(e) {
+            alert('Ошибка: ' + e.message);
+        } finally {
+            publishPostBtn.innerText = originalText;
+            publishPostBtn.disabled = false;
         }
-        const post = {
-            authorId: currentUser.uid,
-            authorName: userNameSpan.innerText,
-            text: text,
-            mediaUrl: mediaUrl,
-            timestamp: Date.now(),
-            likes: 0,
-            commentsCount: 0
-        };
-        await db.ref('posts').push(post);
-        postText.value = '';
-        selectedFile = null;
-        selectedFileNameDiv.innerText = '';
-        loadPosts();
     };
-    function selectFile(accept) {
+
+    function selectImageFile() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = accept;
+        input.accept = 'image/*';
         input.onchange = e => {
-            if(e.target.files[0]) {
+            if(e.target.files && e.target.files[0]) {
                 selectedFile = e.target.files[0];
                 selectedFileNameDiv.innerText = `Выбрано: ${selectedFile.name}`;
             }
         };
         input.click();
     }
-    uploadPhotoBtn.onclick = () => selectFile('image/*');
+    uploadPhotoBtn.onclick = selectImageFile;
 
-    // Чаты и группы
     function loadGroups() {
         if(!currentUser) return;
         db.ref('groups').on('value', snap => {
@@ -968,7 +906,6 @@
         }
     };
 
-    // Звонки
     function showCallUserModal() {
         if(!currentGroupId) return;
         db.ref(`rooms/${currentGroupId}/users`).once('value', snap => {
@@ -1070,7 +1007,6 @@
     };
     closeCallModal.onclick = () => callUserModal.classList.remove('active');
 
-    // Настройки и ник
     settingsBtn.onclick = () => settingsModal.classList.add('active');
     editProfileBtn.onclick = () => nicknameModal.classList.add('active');
     saveNicknameBtn.onclick = () => {
@@ -1103,7 +1039,6 @@
         });
     }
 
-    // Запуск
     initAnonymousAuth();
 </script>
 </body>
