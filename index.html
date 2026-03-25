@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     <style>
         * {
@@ -20,20 +19,20 @@
             font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
             background: #0e1621;
             height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        /* Основной контейнер */
         .app {
-            flex: 1;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1e1f2c;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: #1e1f2c;
-            overflow: hidden;
             position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
         }
-        /* Верхняя панель */
         .top-bar {
             background: #2b2d3e;
             padding: 12px 16px;
@@ -41,6 +40,7 @@
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #3e405b;
+            flex-shrink: 0;
         }
         .avatar {
             width: 44px;
@@ -48,6 +48,7 @@
             border-radius: 50%;
             overflow: hidden;
             background: #ffb347;
+            flex-shrink: 0;
         }
         .avatar img {
             width: 100%;
@@ -56,11 +57,15 @@
         }
         .user-details {
             flex: 1;
+            min-width: 0;
         }
         .user-name {
             font-weight: bold;
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .user-status {
             font-size: 0.7rem;
@@ -73,8 +78,8 @@
             font-size: 1.2rem;
             cursor: pointer;
             padding: 6px;
+            flex-shrink: 0;
         }
-        /* Нижняя навигация */
         .bottom-nav {
             background: #171925;
             display: flex;
@@ -101,19 +106,17 @@
         .nav-btn i {
             font-size: 1.4rem;
         }
-        /* Страницы */
         .page {
             flex: 1;
             overflow-y: auto;
             display: none;
             flex-direction: column;
+            padding: 12px;
         }
         .page.active {
             display: flex;
         }
-        /* Лента */
         .feed {
-            padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -138,6 +141,7 @@
             display: flex;
             gap: 16px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
         .media-buttons button {
             background: #3e405b;
@@ -146,6 +150,11 @@
             border-radius: 30px;
             color: white;
             cursor: pointer;
+        }
+        .selected-file-name {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin: 4px 0;
         }
         .publish-btn {
             background: #2c6e9e;
@@ -174,6 +183,7 @@
             border-radius: 50%;
             background: #ffb347;
             overflow: hidden;
+            flex-shrink: 0;
         }
         .post-author {
             font-weight: bold;
@@ -186,6 +196,7 @@
         .post-text {
             color: #eee;
             margin-bottom: 12px;
+            word-break: break-word;
         }
         .post-media {
             margin-bottom: 12px;
@@ -193,7 +204,7 @@
             border-radius: 16px;
             overflow: hidden;
         }
-        .post-media img, .post-media video {
+        .post-media img {
             width: 100%;
             max-height: 300px;
             object-fit: contain;
@@ -215,9 +226,7 @@
         .post-actions button.liked {
             color: #ff5e7c;
         }
-        /* Чаты */
         .chats-list {
-            padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -241,23 +250,19 @@
             padding: 12px;
             border-radius: 30px;
             color: white;
-            margin: 12px;
+            margin-top: 12px;
             cursor: pointer;
         }
-        /* Окно чата */
         .chat-window {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #1e1f2c;
-            height: 100%;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            z-index: 20;
             background: #1e1f2c;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
         }
         .chat-header {
             background: #2b2d3e;
@@ -266,6 +271,7 @@
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #3e405b;
+            flex-shrink: 0;
         }
         .back-btn {
             background: none;
@@ -303,6 +309,7 @@
             border-radius: 18px;
             background: #2c2f3f;
             color: white;
+            word-break: break-word;
         }
         .me .bubble {
             background: #2c6e9e;
@@ -311,6 +318,7 @@
             background: #1e1f2c;
             padding: 8px 12px;
             border-top: 1px solid #3a3c55;
+            flex-shrink: 0;
         }
         .chat-form {
             display: flex;
@@ -334,7 +342,6 @@
             color: white;
             cursor: pointer;
         }
-        /* Модалки */
         .modal {
             position: fixed;
             top: 0;
@@ -412,7 +419,6 @@
         .comment-text {
             font-size: 0.9rem;
         }
-        /* Стили для списка пользователей при звонке */
         .users-list {
             max-height: 200px;
             overflow-y: auto;
@@ -426,7 +432,6 @@
             cursor: pointer;
             color: white;
         }
-        /* Режимы */
         body.geevka .app {
             background: linear-gradient(145deg, #2b1b3a, #1a1a2e);
         }
@@ -459,14 +464,11 @@
             display: block;
         }
         @media (max-width: 600px) {
-            .user-name {
-                font-size: 1rem;
-            }
             .nav-btn span {
                 display: none;
             }
             .nav-btn i {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
             }
             .nav-btn {
                 padding: 4px 8px;
@@ -494,13 +496,13 @@
 
     <!-- Страница ленты -->
     <div class="page active" id="feedPage">
-        <div class="feed" id="feedContainer">
+        <div class="feed">
             <div class="create-post">
                 <textarea id="postText" rows="2" placeholder="Что нового?"></textarea>
                 <div class="media-buttons">
                     <button id="uploadPhotoBtn"><i class="fas fa-image"></i> Фото</button>
-                    <button id="uploadVideoBtn"><i class="fas fa-video"></i> Видео</button>
                 </div>
+                <div id="selectedFileName" class="selected-file-name"></div>
                 <button class="publish-btn" id="publishPostBtn">Опубликовать</button>
             </div>
             <div id="postsList"></div>
@@ -513,7 +515,7 @@
         <button class="add-group-btn" id="addGroupBtn"><i class="fas fa-plus"></i> Создать группу</button>
     </div>
 
-    <!-- Окно чата (изначально скрыто) -->
+    <!-- Окно чата -->
     <div id="chatWindow" class="chat-window" style="display: none;">
         <div class="chat-header">
             <button class="back-btn" id="closeChatBtn"><i class="fas fa-arrow-left"></i></button>
@@ -531,7 +533,7 @@
     </div>
 </div>
 
-<!-- Модальные окна -->
+<!-- Модалки -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <h3>Настройки</h3>
@@ -543,6 +545,10 @@
             <span>⚖️ Режим Роскомнадзор</span>
             <div class="toggle-switch" id="rknToggle"></div>
         </div>
+        <div class="setting-item">
+            <span>🖼️ ImgBB API ключ</span>
+            <input type="text" id="imgbbApiKey" placeholder="Вставьте ключ" style="flex:1; margin-left:10px; background:#2b2d3e; border:none; border-radius:30px; padding:6px 12px; color:white;">
+        </div>
         <img src="https://i.ibb.co/xSy0mnGv/i-31.png" style="height:40px; display:block; margin:10px auto;">
         <button class="close-modal-btn" style="background:#3c3f5e; border:none; padding:10px; width:100%; border-radius:40px; margin-top:20px; cursor:pointer;">Закрыть</button>
     </div>
@@ -551,7 +557,7 @@
 <div id="nicknameModal" class="modal">
     <div class="modal-content">
         <h3>Изменить имя</h3>
-        <input type="text" id="newNickname" placeholder="Новый ник" style="width:100%; padding:12px; background:#2b2d3e; border:none; border-radius:30px; color:white;">
+        <input type="text" id="newNickname" placeholder="Ваш ник" style="width:100%; padding:12px; background:#2b2d3e; border:none; border-radius:30px; color:white;">
         <button id="saveNicknameBtn" style="margin-top:16px; width:100%; padding:10px; background:#2c6e9e; border:none; border-radius:40px; color:white;">Сохранить</button>
     </div>
 </div>
@@ -600,8 +606,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
-    const storage = firebase.storage();
-    const provider = new firebase.auth.GoogleAuthProvider();
 
     // DOM элементы
     const userNameSpan = document.getElementById('userName');
@@ -621,7 +625,7 @@
     const postText = document.getElementById('postText');
     const publishPostBtn = document.getElementById('publishPostBtn');
     const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
-    const uploadVideoBtn = document.getElementById('uploadVideoBtn');
+    const selectedFileNameDiv = document.getElementById('selectedFileName');
     const settingsModal = document.getElementById('settingsModal');
     const nicknameModal = document.getElementById('nicknameModal');
     const createGroupModal = document.getElementById('createGroupModal');
@@ -636,6 +640,7 @@
     const rknToggle = document.getElementById('rknToggle');
     const saveNicknameBtn = document.getElementById('saveNicknameBtn');
     const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
+    const imgbbApiKeyInput = document.getElementById('imgbbApiKey');
     const ringtone = document.getElementById('ringtone');
     const localRingtone = document.getElementById('localRingtone');
 
@@ -647,6 +652,7 @@
     let isInCall = false;
     let isCalling = false;
     let currentPostForComments = null;
+    let selectedFile = null;
 
     // Режимы
     let geevkaActive = false, rknActive = false;
@@ -670,6 +676,14 @@
     geevkaToggle.onclick = () => applyGeevka(!geevkaActive);
     rknToggle.onclick = () => applyRkn(!rknActive);
 
+    // Сохранение API ключа ImgBB
+    let imgbbApiKey = localStorage.getItem('imgbbApiKey') || '53d3ddff703aa1bf95808cde407ece0f';
+    imgbbApiKeyInput.value = imgbbApiKey;
+    imgbbApiKeyInput.onchange = () => {
+        imgbbApiKey = imgbbApiKeyInput.value.trim();
+        localStorage.setItem('imgbbApiKey', imgbbApiKey);
+    };
+
     // Переключение страниц
     const navBtns = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
@@ -685,39 +699,39 @@
         };
     });
 
-    // Аутентификация
-    function signInWithGoogle() {
-        auth.signInWithPopup(provider).catch(console.error);
-    }
-    auth.onAuthStateChanged(user => {
-        if(user) {
-            currentUser = user;
-            db.ref(`users/${user.uid}`).once('value', snap => {
-                let name = snap.val()?.name;
-                if(!name) {
-                    name = user.displayName || user.email?.split('@')[0] || 'Гость';
-                    db.ref(`users/${user.uid}/name`).set(name);
-                }
-                userNameSpan.innerText = name;
-            });
-            // Предварительные группы (только Общий чат и Друзья)
-            const defaultGroups = ['Общий чат', 'Друзья'];
-            defaultGroups.forEach(gName => {
-                db.ref('groups').orderByChild('name').equalTo(gName).once('value', snap => {
-                    if(!snap.exists()) {
-                        db.ref('groups').push({ name: gName, createdAt: Date.now() });
+    // Анонимная аутентификация
+    function initAnonymousAuth() {
+        auth.signInAnonymously()
+            .then(userCred => {
+                currentUser = userCred.user;
+                db.ref(`users/${currentUser.uid}/name`).once('value', snap => {
+                    let name = snap.val();
+                    if(!name) {
+                        const defaultName = 'Гость_' + currentUser.uid.slice(0,6);
+                        name = prompt('Введите ваш ник:', defaultName);
+                        if(!name) name = defaultName;
+                        db.ref(`users/${currentUser.uid}/name`).set(name);
                     }
+                    userNameSpan.innerText = name;
                 });
+                const defaultGroups = ['Общий чат', 'Друзья'];
+                defaultGroups.forEach(gName => {
+                    db.ref('groups').orderByChild('name').equalTo(gName).once('value', snap => {
+                        if(!snap.exists()) {
+                            db.ref('groups').push({ name: gName, createdAt: Date.now() });
+                        }
+                    });
+                });
+                loadPosts();
+                loadGroups();
+            })
+            .catch(err => {
+                console.error('Ошибка аутентификации:', err);
+                alert('Ошибка подключения к Firebase. Убедитесь, что в консоли Firebase включена анонимная аутентификация.');
             });
-            loadPosts();
-            loadGroups();
-        } else {
-            document.body.innerHTML = `<div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#252736; padding:32px; border-radius:32px; text-align:center; color:white;"><h2>CAIД</h2><p>Войдите через Google</p><button id="googleLoginBtn" style="background:#4285F4; border:none; padding:12px 24px; border-radius:40px; color:white; cursor:pointer;">Войти</button></div>`;
-            document.getElementById('googleLoginBtn').onclick = signInWithGoogle;
-        }
-    });
+    }
 
-    // Лента
+    // Загрузка ленты
     function loadPosts() {
         db.ref('posts').orderByChild('timestamp').once('value', snap => {
             const posts = snap.val();
@@ -733,7 +747,7 @@
                             <div><div class="post-author">${escapeHtml(post.authorName)}</div><div class="post-time">${new Date(post.timestamp).toLocaleString()}</div></div>
                         </div>
                         <div class="post-text">${escapeHtml(post.text)}</div>
-                        ${post.mediaUrl ? `<div class="post-media">${post.mediaType === 'video' ? `<video controls src="${post.mediaUrl}"></video>` : `<img src="${post.mediaUrl}">`}</div>` : ''}
+                        ${post.mediaUrl ? `<div class="post-media"><img src="${post.mediaUrl}"></div>` : ''}
                         <div class="post-actions">
                             <button class="like-btn" data-id="${id}"><i class="fas fa-heart"></i> ${post.likes || 0}</button>
                             <button class="comment-btn" data-id="${id}"><i class="fas fa-comment"></i> ${post.commentsCount || 0}</button>
@@ -793,26 +807,41 @@
         loadComments(currentPostForComments);
     };
 
-    // Публикация с медиа
-    let selectedFile = null;
-    function uploadMedia(file) {
-        const storageRef = storage.ref(`posts/${Date.now()}_${file.name}`);
-        return storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL());
+    // Загрузка фото на ImgBB
+    async function uploadToImgBB(file, apiKey) {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('key', apiKey);
+        const response = await fetch('https://api.imgbb.com/1/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error?.message || 'Ошибка загрузки');
+        return data.data.url;
     }
+
     publishPostBtn.onclick = async () => {
         const text = postText.value.trim();
-        if(!text && !selectedFile) { alert('Напишите текст или добавьте медиа'); return; }
-        let mediaUrl = null, mediaType = null;
+        if(!text && !selectedFile) { alert('Напишите текст или добавьте фото'); return; }
+        if(selectedFile && !imgbbApiKey) {
+            alert('Для загрузки фото вставьте API ключ ImgBB в настройках');
+            return;
+        }
+        let mediaUrl = null;
         if(selectedFile) {
-            mediaType = selectedFile.type.startsWith('video') ? 'video' : 'image';
-            mediaUrl = await uploadMedia(selectedFile);
+            try {
+                mediaUrl = await uploadToImgBB(selectedFile, imgbbApiKey);
+            } catch(e) {
+                alert('Ошибка загрузки фото: ' + e.message);
+                return;
+            }
         }
         const post = {
             authorId: currentUser.uid,
             authorName: userNameSpan.innerText,
             text: text,
             mediaUrl: mediaUrl,
-            mediaType: mediaType,
             timestamp: Date.now(),
             likes: 0,
             commentsCount: 0
@@ -820,19 +849,22 @@
         await db.ref('posts').push(post);
         postText.value = '';
         selectedFile = null;
+        selectedFileNameDiv.innerText = '';
         loadPosts();
     };
-    uploadPhotoBtn.onclick = () => { selectFile('image/*'); };
-    uploadVideoBtn.onclick = () => { selectFile('video/*'); };
     function selectFile(accept) {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = accept;
         input.onchange = e => {
-            if(e.target.files[0]) selectedFile = e.target.files[0];
+            if(e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                selectedFileNameDiv.innerText = `Выбрано: ${selectedFile.name}`;
+            }
         };
         input.click();
     }
+    uploadPhotoBtn.onclick = () => selectFile('image/*');
 
     // Чаты и группы
     function loadGroups() {
@@ -881,7 +913,6 @@
         db.ref(`rooms/${groupId}/users/${currentUser.uid}`).set({ name: userNameSpan.innerText });
         db.ref(`rooms/${groupId}/users/${currentUser.uid}`).onDisconnect().remove();
 
-        // Слушаем звонки в этой группе
         if(callRef) callRef.off();
         callRef = db.ref(`calls/${groupId}`);
         callRef.on('child_added', snap => {
@@ -1004,7 +1035,7 @@
             callId.set({
                 type: 'answer',
                 from: currentUser.uid,
-                to: currentUser.uid, // укажем, что ответ нашему пользователю
+                to: currentUser.uid,
                 answer: data,
                 timestamp: Date.now()
             });
@@ -1039,7 +1070,7 @@
     };
     closeCallModal.onclick = () => callUserModal.classList.remove('active');
 
-    // Модалки настроек
+    // Настройки и ник
     settingsBtn.onclick = () => settingsModal.classList.add('active');
     editProfileBtn.onclick = () => nicknameModal.classList.add('active');
     saveNicknameBtn.onclick = () => {
@@ -1071,6 +1102,9 @@
             return m;
         });
     }
+
+    // Запуск
+    initAnonymousAuth();
 </script>
 </body>
 </html>
