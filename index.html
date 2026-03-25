@@ -227,20 +227,24 @@
         .post-actions button.liked {
             color: #ff5e7c;
         }
-        .delete-post-btn {
+        .delete-post {
             position: absolute;
             top: 12px;
             right: 12px;
-            background: none;
+            background: rgba(0,0,0,0.5);
             border: none;
-            color: #fff;
-            font-size: 1.2rem;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             cursor: pointer;
-            opacity: 0.6;
-            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
         }
-        .delete-post-btn:hover {
-            opacity: 1;
+        .delete-post:hover {
+            background: #e74c3c;
         }
         .chats-list {
             display: flex;
@@ -549,9 +553,6 @@
     </div>
 </div>
 
-<!-- Скрытый input для выбора файла -->
-<input type="file" id="fileInput" accept="image/*" style="display: none;">
-
 <!-- Модалки -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
@@ -660,7 +661,6 @@
     const saveNicknameBtn = document.getElementById('saveNicknameBtn');
     const confirmCreateGroupBtn = document.getElementById('confirmCreateGroupBtn');
     const imgbbApiKeyInput = document.getElementById('imgbbApiKey');
-    const fileInput = document.getElementById('fileInput');
     const ringtone = document.getElementById('ringtone');
     const localRingtone = document.getElementById('localRingtone');
 
@@ -759,14 +759,13 @@
             if(posts) {
                 const sorted = Object.entries(posts).sort((a,b) => b[1].timestamp - a[1].timestamp);
                 sorted.forEach(([id, post]) => {
+                    const isAuthor = post.authorId === currentUser.uid;
+                    const isAdmin = userNameSpan.innerText === 'Админ';
+                    const canDelete = isAuthor || isAdmin;
                     const postDiv = document.createElement('div');
                     postDiv.className = 'post';
-                    // Кнопка удаления (видна только автору)
-                    const deleteBtn = (post.authorId === currentUser?.uid) 
-                        ? `<button class="delete-post-btn" data-id="${id}"><i class="fas fa-times"></i></button>` 
-                        : '';
+                    postDiv.dataset.id = id;
                     postDiv.innerHTML = `
-                        ${deleteBtn}
                         <div class="post-header">
                             <div class="post-avatar"><img src="https://i.ibb.co/Rk6Gbmy7/2026-03-24-22-19-36.jpg" style="width:100%;height:100%;object-fit:cover;"></div>
                             <div><div class="post-author">${escapeHtml(post.authorName)}</div><div class="post-time">${new Date(post.timestamp).toLocaleString()}</div></div>
@@ -777,17 +776,24 @@
                             <button class="like-btn" data-id="${id}"><i class="fas fa-heart"></i> ${post.likes || 0}</button>
                             <button class="comment-btn" data-id="${id}"><i class="fas fa-comment"></i> ${post.commentsCount || 0}</button>
                         </div>
+                        ${canDelete ? `<button class="delete-post" data-id="${id}"><i class="fas fa-times"></i></button>` : ''}
                     `;
                     postsListDiv.appendChild(postDiv);
                 });
-                // Привязываем события
+                // Привязываем события после вставки
                 document.querySelectorAll('.like-btn').forEach(btn => {
-                    btn.onclick = () => likePost(btn.dataset.id);
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        likePost(btn.dataset.id);
+                    };
                 });
                 document.querySelectorAll('.comment-btn').forEach(btn => {
-                    btn.onclick = () => openCommentsModal(btn.dataset.id);
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        openCommentsModal(btn.dataset.id);
+                    };
                 });
-                document.querySelectorAll('.delete-post-btn').forEach(btn => {
+                document.querySelectorAll('.delete-post').forEach(btn => {
                     btn.onclick = (e) => {
                         e.stopPropagation();
                         deletePost(btn.dataset.id);
@@ -797,16 +803,24 @@
         });
     }
 
-    function deletePost(postId) {
-        if(confirm('Удалить этот пост?')) {
-            db.ref(`posts/${postId}`).remove().then(() => loadPosts());
-        }
-    }
-
     function likePost(postId) {
         const likeRef = db.ref(`posts/${postId}/likes`);
         likeRef.transaction(current => (current || 0) + 1);
         loadPosts();
+    }
+
+    async function deletePost(postId) {
+        if(!confirm('Удалить этот пост?')) return;
+        try {
+            // Удаляем сам пост
+            await db.ref(`posts/${postId}`).remove();
+            // Удаляем все комментарии к посту
+            await db.ref(`comments/${postId}`).remove();
+            loadPosts(); // обновляем ленту
+        } catch(e) {
+            console.error('Ошибка удаления:', e);
+            alert('Не удалось удалить пост');
+        }
     }
 
     function openCommentsModal(postId) {
@@ -859,6 +873,25 @@
         return data.data.url;
     }
 
+    // Надёжная загрузка файла на мобильных
+    function selectFile(accept) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = accept;
+        input.style.position = 'absolute';
+        input.style.opacity = '0';
+        input.style.pointerEvents = 'none';
+        document.body.appendChild(input);
+        input.onchange = e => {
+            if(e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                selectedFileNameDiv.innerText = `Выбрано: ${selectedFile.name}`;
+            }
+            document.body.removeChild(input);
+        };
+        input.click();
+    }
+
     publishPostBtn.onclick = async () => {
         const text = postText.value.trim();
         if(!text && !selectedFile) { alert('Напишите текст или добавьте фото'); return; }
@@ -891,18 +924,9 @@
         loadPosts();
     };
 
-    // Выбор файла через скрытый input
-    uploadPhotoBtn.onclick = () => {
-        fileInput.click();
-    };
-    fileInput.onchange = (e) => {
-        if(e.target.files && e.target.files[0]) {
-            selectedFile = e.target.files[0];
-            selectedFileNameDiv.innerText = `Выбрано: ${selectedFile.name}`;
-        }
-    };
+    uploadPhotoBtn.onclick = () => selectFile('image/*');
 
-    // Чаты и группы (без изменений, оставим как было)
+    // Чаты и группы
     function loadGroups() {
         if(!currentUser) return;
         db.ref('groups').on('value', snap => {
@@ -1115,6 +1139,7 @@
             db.ref(`users/${currentUser.uid}/name`).set(newName).then(() => {
                 userNameSpan.innerText = newName;
                 nicknameModal.classList.remove('active');
+                loadPosts(); // обновляем ленту, чтобы обновились права удаления
             });
         }
     };
